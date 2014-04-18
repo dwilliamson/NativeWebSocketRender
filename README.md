@@ -1,5 +1,5 @@
-NativeWebSocketInterop
-======================
+NativeWebSocketRender
+=====================
 
 Run Server.exe and navigate to NativeWebSocketInterop.html with Chrome or Firefox (untested on IE or others). You should see a plasma effect animate in the browser.
 
