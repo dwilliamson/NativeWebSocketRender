@@ -1,0 +1,97 @@
+
+<html>
+
+	<head>
+
+	</head>
+
+	<body>
+
+		<pre>Frame Time: <span id="Time">0</span>
+Latency: <span id="Latency">0</span> </pre>
+
+		<canvas id="FinalImage" width="1024" height="768">
+		</canvas>
+
+		<script type="text/javascript">
+
+			var ws;
+
+			var canvas = document.getElementById("FinalImage");
+			var ctx = canvas.getContext("2d");
+			var image = ctx.createImageData(canvas.width, canvas.height);
+
+			var last_ms = 0;
+
+			function OnOpen(event)
+			{
+				console.log("Connection Opened");
+				ws.send(Date.now() & 0xFFFFFF);
+			}
+
+			function OnMessage(event)
+			{
+				if (event.data instanceof ArrayBuffer)
+				{
+					ws.send(Date.now() & 0xFFFFFF);
+
+					var bytearray = new Uint8Array(event.data);
+
+					var image_data = image.data;
+					var len = image_data.length;
+
+					var j = 3;
+					for (var i = 0; i < len; i += 4)
+					{
+						image_data[i] = bytearray[j];
+						image_data[i + 1] = bytearray[j + 1];
+						image_data[i + 2] = bytearray[j + 2];
+						image_data[i + 3] = 255;
+						j += 3;
+					}
+
+					ctx.putImageData(image, 0, 0);
+
+					document.getElementById("Time").innerHTML = Date.now() - last_ms;
+					last_ms = Date.now();
+
+					// 24-bit timestamp as Javascript can't left shift > 31
+					var time_stamp = 0;
+					for (var i = 0; i < 3; i++)
+						time_stamp += bytearray[i] << (i * 8);
+
+					var latency = (Date.now() & 0xFFFFFF) - time_stamp;
+					document.getElementById("Latency").innerHTML = latency;
+				}
+			}
+
+			function OnClose(event)
+			{
+				console.log("Connection Closed");
+				Connect();
+			}
+
+			function OnError(event)
+			{
+				console.log("Connection Error");
+			}
+
+			function Connect()
+			{
+				console.log("Opening WebSocket connection");
+
+				ws = new WebSocket("ws://localhost:8888");
+				ws.binaryType = "arraybuffer";
+				ws.onopen = OnOpen;
+				ws.onmessage = OnMessage;
+				ws.onclose = OnClose;
+				ws.onerror = OnError;
+			}
+
+			Connect();
+
+		</script>
+
+	</body>
+
+</html>
