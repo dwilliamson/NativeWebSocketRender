@@ -154,7 +154,7 @@ std::unique_ptr<unsigned char> WebSocket::Receive(int& data_size)
 	switch (msg_length)
 	{
 		case 126: size_bytes_remaining = 2; break;
-		case 127: size_bytes_remaining = 4; break;
+		case 127: size_bytes_remaining = 8; break;
 	}
 
 	if (size_bytes_remaining > 0)
@@ -167,10 +167,10 @@ std::unique_ptr<unsigned char> WebSocket::Receive(int& data_size)
 			return 0;
 		}
 
-		// Calculate new length
+		// Calculate new length, MSB first
 		msg_length = 0;
-		for (int i = size_bytes_remaining - 1; i >= 0; i--)
-			msg_length |= size_bytes[i] << (i * 8);
+		for (i = 0; i < size_bytes_remaining; i++)
+			msg_length |= size_bytes[i] << ((size_bytes_remaining - 1 - i) * 8);
 	}
 
 	// Receive any message data masks
